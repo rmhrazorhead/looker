@@ -1,12 +1,12 @@
 filesName = 'looker-files.txt'
 workbooksToSearch = []
-print(f'Workbooks to search:')
+# print(f'Workbooks to search:')
 with open(filesName) as file:
     lines = file.readlines()
     for line in lines:
         line = line.strip('\n')
         line = line.strip('"')
-        print(line)
+        # print(line)
         workbooksToSearch.append(line)
 
 from openpyxl import *
@@ -20,7 +20,8 @@ lmeHeader = {'name':'LME (All FOREIGN VOYAGES ONLY) REFUNDS/COMMISSIONS TO BE RE
 
 columns = ['BOOKING #', 'NAME', 'AMOUNT', 'COMMENTS', ' AMT PAID ', 'DATE PAID', 'CHK/CC', 'VOID DATE']
 
-sectionsToFind = [lexHeader,lmeHeader]
+allSections = [lexHeader,lmeHeader]
+sectionsToFind = allSections[:]
 tabName = 'Sales'
 
 # sampleWorkbookName = 'C:/Users/reece.Holzhauser/Downloads/Payments for Week Ending 120222.xlsx'
@@ -34,10 +35,16 @@ for section in sectionsToFind:
     for i in range(len(columns)):
         newsheet.cell(row=1, column=i+1, value=columns[i])
 
-activeSection = None
-headerColumn = None
 
+
+currentWorkbook = 1
+totalWorkbooks = len(workbooksToSearch)
 for workbookName in workbooksToSearch:
+    print(f'Processing workbook {currentWorkbook}/{totalWorkbooks}: {workbookName}')
+    currentWorkbook += 1
+    sectionsToFind = allSections[:]
+    activeSection = None
+    headerColumn = None
     workbook = load_workbook(filename=workbookName, read_only=True)
     searchSheet = workbook[tabName]
     for row in searchSheet.values:
@@ -46,6 +53,7 @@ for workbookName in workbooksToSearch:
                 if section['name'] in row:
                     #extract section
                     activeSection = section
+                    print(f'Found section: {activeSection["tabTitle"]}')
                     headerColumn = row.index(activeSection['name'])
                     sectionsToFind.remove(section)
                     break
@@ -54,6 +62,7 @@ for workbookName in workbooksToSearch:
             if row[headerColumn] == columns[0]:
                 continue
             if row[headerColumn] is None and row[headerColumn+1] is None:
+                print(f'End of section: {activeSection["tabTitle"]}')
                 activeSection = None
                 headerColumn = None
                 continue
